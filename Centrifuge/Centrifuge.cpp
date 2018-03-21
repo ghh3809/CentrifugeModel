@@ -32,12 +32,16 @@ struct Particle {
 		return this->cameradistance > that.cameradistance;
 	}
 };
+// ********** 整体控制部分 **********
+const int MaxParticles = 5000;						// 爆炸颗粒数
+const float timeRatio = 0.1f;						// 时间比例
+const float centrifugeSpeed = 8.0f;					// 离心机转速(rad/s)
+const float boomSpeed = 20.0f;						// 爆炸速率(m/s)
+const float gravityAcceleraion = 9.81f * 1;			// 重力加速度
+const float frictionCoefficient = 0.01f * 0;		// 摩擦系数
+// ********** 整体控制部分 **********
 
-const int MaxParticles = 5000;
-const float timeRatio = 0.1f;
-const float centrifugeSpeed = 10.0f;
 Particle ParticlesContainer[MaxParticles];
-
 bool startFlag = false; // Simulation start flag. If TRUE, simulation will begin
 
 // OpenGL keyboard callback function
@@ -191,7 +195,7 @@ int main(void)
 	GLuint MatrixID2 = glGetUniformLocation(programID2, "MVP");
 
 	GLuint vertexbuffer2;
-	GLfloat g_vertex_buffer_data2[18] = {0,0,0, 10,0,0, 0,0,0, 0,10,0, 0,0,0, 0,0,10};
+	GLfloat g_vertex_buffer_data2[18] = {0,0,0, 1,0,0, 0,0,0, 0,1,0, 0,0,0, 0,0,1};
 
 	glGenBuffers(1, &vertexbuffer2);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer2);
@@ -212,7 +216,7 @@ int main(void)
 		ParticlesContainer[particleIndex].a = rand() % 256;
 
 		ParticlesContainer[particleIndex].size = (rand() % 1000) / 2000.0f + 0.1f;
-		ParticlesContainer[particleIndex].size = 1.0f;
+		ParticlesContainer[particleIndex].size = 0.2f;
 		ParticlesContainer[particleIndex].life = 1000.0f; // This particle will live 5 seconds.
 
 	}
@@ -223,7 +227,7 @@ int main(void)
 	ParticlesContainer[MaxParticles - 1].g = 255;
 	ParticlesContainer[MaxParticles - 1].b = 255;
 	ParticlesContainer[MaxParticles - 1].a = 255;
-	ParticlesContainer[MaxParticles - 1].size = 2.0f;
+	ParticlesContainer[MaxParticles - 1].size = 0.2f;
 	ParticlesContainer[MaxParticles - 1].life = 1000.0f;
 
 
@@ -259,8 +263,7 @@ int main(void)
 			for (int i = 0; i < MaxParticles; i++) {
 				Particle& p = ParticlesContainer[i]; // shortcut
 
-				const float boomspeed = 500.0f;
-				float speed = boomspeed * pow((rand() % 10000) / 10000.0f, 0.3);
+				float speed = boomSpeed * pow((rand() % 10000) / 10000.0f, 0.3);
 				float longitude = 2.0f * 3.1416f * (rand() % 10000) / 10000.0f;
 				float latitude = acos((rand() % 20000 - 10000.0f) / 10000.0f);
 
@@ -287,9 +290,11 @@ int main(void)
 							p.cameradistance = glm::length2(p.pos - CameraPosition);
 						} else {
 							glm::vec3 startSpeed = p.speed;
-							float startSpeedValue = sqrt(startSpeed[0] * startSpeed[0] + startSpeed[1] * startSpeed[1] + startSpeed[2] * startSpeed[2]);
-							glm::vec3 gravity = glm::vec3(0.0f, -0.00f * 50, 0.0f); // Gravity acceleration
-							glm::vec3 friction = (float)(-0.00f * startSpeedValue / p.size) * startSpeed; // Friction acceleration, f=kSv^2, where we set k=0.01
+							glm::vec3 boxSpeed = centrifugeSpeed * radius * glm::vec3(cos(angle), -sin(angle), 0);
+							glm::vec3 relativeSpeed = startSpeed - boxSpeed;
+							float relativeSpeedValue = sqrt(relativeSpeed[0] * relativeSpeed[0] + relativeSpeed[1] * relativeSpeed[1] + relativeSpeed[2] * relativeSpeed[2]);
+							glm::vec3 gravity = glm::vec3(0.0f, 0.0f, -gravityAcceleraion); // Gravity acceleration
+							glm::vec3 friction = (float)(frictionCoefficient * relativeSpeedValue / p.size) * startSpeed; // Friction acceleration, f=kSv^2, where we set k=0.01
 							glm::vec3 endSpeed = startSpeed + (float)delta * (gravity + friction);
 							glm::vec3 aveSpeed = (startSpeed + endSpeed) * 0.5f;
 							p.speed = endSpeed;

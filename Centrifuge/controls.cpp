@@ -16,7 +16,7 @@ bool rotateFlag = false; // Rotation start flag. If TRUE, rotation will begin.
 bool moveFlag = false; // Move start flag. If TRUE, move will begin.
 bool noninertialFlag = false; // Noninertial view flag. If TRUE, the view will from the centrifuge.
 float centrifugeAngle = 0.0f; // The position of centrifuge;
-const float centrifugeRadius = 100.0f; // The radius of centrifuge;
+const float centrifugeRadius = 5.0f; // The radius of centrifuge;
 
 glm::mat4 getViewMatrix() {
 	return ViewMatrix;
@@ -64,11 +64,13 @@ float initialFoV = 45.0f;
 // Initial view center point
 glm::vec3 centerPoint = glm::vec3(0, 0, 0);
 // Initial view distance
-float viewDistance = 200.0f;
+float viewDistance = 30.0f;
 
+// ********** Control parameter of mouse and keyboard **********
 float rotateSpeed = 0.005f;
 float moveSpeed = 0.001f;
-float distanceSpeed = 3.0f;
+float distanceSpeed = 0.3f;
+// ********** Control parameter of mouse and keyboard **********
 
 void AddScrollOffset(double offset) {
 	viewDistance -= distanceSpeed * offset;
